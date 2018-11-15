@@ -5,7 +5,7 @@ from nets import inception
 
 class Model(object):
     def __init__(self, is_training=True):
-        self.batch_size = 46
+        self.batch_size = 32
         self.vocabulary_size = 1966     # 1963 word + '<S>' '</S>' '<EOS>'
 
         self.lstm_units = 512
@@ -37,10 +37,10 @@ class Model(object):
     def build_cnn(self):
         net_local, _, net_global = inception.inception_v3(self.images, trainable=True, is_training=True, add_summaries=False)
 
-        # net_local = tf.reshape(net_local, [self.batch_size, 25, 2048])
-        # self.visual_feats = tf.reduce_max(net_local, axis=1)
+        net_local = tf.reshape(net_local, [self.batch_size, 25, 2048])
+        self.visual_feats = net_local
 
-        self.visual_feats = net_global # net_global=[batch size, 2048]
+        # self.visual_feats = net_global # net_global=[batch size, 2048]
         print('cnn built.')
 
     def build_rnn(self):
@@ -52,16 +52,7 @@ class Model(object):
                                     regularizer=nn.kernel_regularizer(),
                                     trainable=True)
 
-        # 1. build Sent LSTM and Word LSTM
-        SentLSTM = tf.nn.rnn_cell.LSTMCell(
-            self.lstm_units,
-            initializer=nn.kernel_initializer())
-        if self.is_train:
-            SentLSTM = tf.nn.rnn_cell.DropoutWrapper(
-                SentLSTM,
-                input_keep_prob=1.0 - self.lstm_drop_rate,
-                output_keep_prob=1.0 - self.lstm_drop_rate,
-                state_keep_prob=1.0 - self.lstm_drop_rate)
+        # 1. build Word LSTM
         WordLSTM = tf.nn.rnn_cell.LSTMCell(
             self.lstm_units,
             initializer=nn.kernel_initializer())
@@ -71,20 +62,20 @@ class Model(object):
                 input_keep_prob=1.0 - self.lstm_drop_rate,
                 output_keep_prob=1.0 - self.lstm_drop_rate,
                 state_keep_prob=1.0 - self.lstm_drop_rate)
-        SentLSTM_last_state = SentLSTM.zero_state(self.batch_size, dtype=tf.float32)
 
 
         predictions = []  # store predict word
         prediction_corrects = []  # store correct predict to compute accuracy
         cross_entropies = []  # store cross entropy loss
         # 3. generate word step by step
-        for sent_id in range(self.max_sentence_num):
-            with tf.variable_scope("sent_lstm"):
-                SentLSTM_current_output, SentLSTM_current_state = SentLSTM(self.visual_feats, SentLSTM_last_state)
-            SentLSTM_last_state = SentLSTM_current_state
+        for sent_id in range(0, self.max_sentence_num):
+            with tf.variable_scope('visual_encode'):
+                image_embeddings = self.visual_feats
+                visual_feats = self.image_encode(image_embeddings)
 
-            with tf.variable_scope("word_lstm_initialize"):
-                context = SentLSTM_current_output
+            with tf.variable_scope("word_lstm_initialize", reuse=tf.AUTO_REUSE):
+                v_feats = nn.dropout(visual_feats, self.dropout_rate, self.is_train, name='drop')
+                context = v_feats
                 initial_memory = nn.dense(context, self.lstm_units, name='fc_a')
                 initial_output = nn.dense(context, self.lstm_units, name='fc_b')
             WordLSTM_last_state = initial_memory, initial_output
@@ -108,22 +99,22 @@ class Model(object):
                 WordLSTM_last_state = WordLSTM_current_state
                 # use teacher policy
                 if self.is_train:
-                    WordLSTM_last_word = self.sentences[:, sent_id*self.max_caption_length + id]
+                    WordLSTM_last_word = self.sentences[:, sent_id * self.max_caption_length + id]
                 else:
                     WordLSTM_last_word = prediction
 
                 # compute loss
                 cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                                labels=self.sentences[:, sent_id*self.max_caption_length + id],
-                                logits=logits)
-                masked_cross_entropy = cross_entropy * self.masks[:, sent_id*self.max_caption_length + id]
+                    labels=self.sentences[:, sent_id * self.max_caption_length + id],
+                    logits=logits)
+                masked_cross_entropy = cross_entropy * self.masks[:, sent_id * self.max_caption_length + id]
                 cross_entropies.append(masked_cross_entropy)
 
                 # compute accuracy
-                ground_truth = tf.cast(self.sentences[:, sent_id*self.max_caption_length + id], tf.int64)
+                ground_truth = tf.cast(self.sentences[:, sent_id * self.max_caption_length + id], tf.int64)
                 prediction_correct = tf.where(
                     tf.equal(prediction, ground_truth),
-                    tf.cast(self.masks[:, sent_id*self.max_caption_length + id], tf.float32),
+                    tf.cast(self.masks[:, sent_id * self.max_caption_length + id], tf.float32),
                     tf.cast(tf.zeros_like(prediction), tf.float32)
                 )
                 prediction_corrects.append(prediction_correct)
@@ -195,3 +186,19 @@ class Model(object):
 
         self.summary = tf.summary.merge_all()
         print('summary built.')
+
+    def image_encode(self, image_embeddings):
+        # word_embeddings shape = [batch_size, 25, 2048]
+        with tf.variable_scope('sent_decode', reuse=tf.AUTO_REUSE):
+            net = tf.layers.conv1d(image_embeddings, filters=1024, kernel_size=3, strides=1)
+            sent_feature1 = tf.layers.max_pooling1d(net, pool_size=25 - 2, strides=100)
+            net = tf.layers.conv1d(net, filters=1024, kernel_size=3, strides=1)
+            sent_feature2 = tf.layers.max_pooling1d(net, pool_size=25 - 4, strides=100)
+            net = tf.layers.conv1d(net, filters=1024, kernel_size=3, strides=1)
+            sent_feature3 = tf.layers.max_pooling1d(net, pool_size=25 - 6, strides=100)
+        sent_feature1 = tf.reshape(sent_feature1, shape=[self.batch_size, 1024])
+        sent_feature2 = tf.reshape(sent_feature2, shape=[self.batch_size, 1024])
+        sent_feature3 = tf.reshape(sent_feature3, shape=[self.batch_size, 1024])
+        sent_feature = tf.concat([sent_feature1, sent_feature2, sent_feature3], axis=1)  # [batch_size, 1024*3]
+        # print(sent_feature)
+        return sent_feature

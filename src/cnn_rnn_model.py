@@ -171,7 +171,7 @@ class Model(object):
 
     def build_summary(self):
         with tf.name_scope("metrics"):
-            tf.summary.scalar('text loss', self.cross_entropy_text)
+            tf.summary.scalar('cross entropy', self.cross_entropy_text)
             tf.summary.scalar('reg loss', self.reg_loss)
             tf.summary.scalar('acc', self.accuracy)
 

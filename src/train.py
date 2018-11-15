@@ -8,10 +8,9 @@ import metrics
 # from cnn_rnn_model import Model
 # from cnn_rnn_att_model import Model
 # from cnn_hier_rnn_model import Model
-# from cnn_hier_rnn_vgg_model import Model
-# from cnn_hier_rnn_resnet_model import Model
-from cnn_1d_conv_model import Model
-# from cnn_1d_conv_att_model import Model
+# from cnn_1d_conv_model import Model
+from cnn_1d_conv_only_semantic_model import Model
+# from cnn_1d_conv_only_visual_model import Model
 
 imgs_dir_path = '/home/wanglei/Documents/IUX-Ray/front_view_data'
 data_entry_path = '../data/data_entry/data_entry.json'
@@ -23,13 +22,15 @@ pretrain_vgg_19_ckpt_path = '/home/wanglei/Documents/b_pre_train_model/vgg/vgg_1
 pretrain_resnet_152_ckpt_path = '/home/wanglei/Documents/b_pre_train_model/resnet/resnet_v2_152.ckpt'
 
 start_epoch = 0
-end_epoch = 31
+end_epoch = 101
 summary_path = '../data/summary'
 model_path = '../data/model/my-test-300'
 model_path_save = '../data/model/my-test'
+
 def train():
-    md = Model(is_training=True) # Train model
-    mdv = Model(is_training=True)  # Train model
+    md = Model(is_training=True)    # Train model
+    mdv = Model(is_training=True)   # Train model
+    mdt = Model(is_training=False)   # Train model
 
     print('---Read Dataset...')
     image_list_t, sentence_list_t, mask_list_t, filename_list_t = datasets.get_input_hier(imgs_dir_path, data_entry_path,
@@ -78,6 +79,7 @@ def train():
                 print('epoch = %s, loss = %.4f, acc = %.4f, bleu = %s, meteor = %s, rouge = %s, cider = %s' %
                       (i, np.mean(loss_list), np.mean(acc_list), bleu, meteor, rouge, cider))
 
+                # val model
                 loss_list, acc_list, predictions_list = [], [], []
                 sentence_list_metrics = []
                 iters = int(val_num / md.batch_size)
@@ -100,6 +102,33 @@ def train():
                 loss_val = round(np.mean(loss_list), 4)
                 print('------epoch = %s, loss = %s, acc = %.4f, bleu = %s, meteor = %s, rouge = %s, cider = %s' %
                       (i, tc.colored(loss_val, 'red'), np.mean(acc_list), bleu, meteor, rouge, cider))
+
+                # test model
+                loss_list, acc_list, predictions_list = [], [], []
+                sentence_list_metrics = []
+                iters = int(val_num / md.batch_size)
+                for k in range(iters):
+                    images = image_list_v[k * md.batch_size:(k + 1) * md.batch_size]
+                    sentences = sentence_list_v[k * md.batch_size:(k + 1) * md.batch_size]
+                    masks = mask_list_v[k * md.batch_size:(k + 1) * md.batch_size]
+                    feed_dict = {mdt.images: images, mdt.sentences: sentences,
+                                 mdt.masks: masks}
+                    _loss, _acc, _predictions, = sess.run(
+                        [mdt.loss, mdt.accuracy, mdt.predictions],
+                        feed_dict=feed_dict)
+
+                    loss_list.append(_loss)
+                    acc_list.append(_acc)
+                    predictions_list.append(_predictions)
+                    sentence_list_metrics += sentences
+
+                bleu, meteor, rouge, cider = metrics.coco_caption_metrics_hier(predictions_list, sentence_list_metrics,
+                                                                               filename_list_v, vocabulary_path,
+                                                                               batch_size=mdt.batch_size)
+                loss_test = round(np.mean(loss_list), 4)
+                print('------epoch = %s, loss = %s, acc = %.4f, bleu = %s, meteor = %s, rouge = %s, cider = %s' %
+                      (i, loss_test, np.mean(acc_list), tc.colored(bleu, 'blue'), tc.colored(meteor, 'blue'), tc.colored(rouge,'blue'),
+                       tc.colored(cider, 'blue')))
 
             if i % 1 == 0:
                 saver.save(sess, model_path_save, global_step=i)

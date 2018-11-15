@@ -5,7 +5,7 @@ from nets import vgg
 
 class Model(object):
     def __init__(self, is_training=True):
-        self.batch_size = 46
+        self.batch_size = 32
         self.vocabulary_size = 1966     # 1963 word + '<S>' '</S>' '<EOS>'
 
         self.lstm_units = 512
@@ -34,7 +34,7 @@ class Model(object):
             self.build_summary()
 
     def build_cnn(self):
-        _, end_points = vgg.vgg_19(self.images, num_classes=1000, trainable=False, is_training=self.is_training)
+        _, end_points = vgg.vgg_19(self.images, num_classes=1000, is_training=self.is_training)
 
         visual_feats = end_points['vgg_19/conv5/conv5_4'] # [batch_size, 14, 14, 512]
         self.visual_feats = tf.reshape(visual_feats, [self.batch_size, 196, 512])
@@ -194,7 +194,7 @@ class Model(object):
 
     def build_summary(self):
         with tf.name_scope("metrics"):
-            tf.summary.scalar('cross entrophy', self.cross_entropy_text)
+            tf.summary.scalar('cross entropy', self.cross_entropy_text)
             tf.summary.scalar('att loss', self.attention_loss)
             tf.summary.scalar('reg loss', self.reg_loss)
             tf.summary.scalar('acc', self.accuracy)

@@ -5,7 +5,7 @@ from nets import inception
 
 class Model(object):
     def __init__(self, is_training=True):
-        self.batch_size = 46
+        self.batch_size = 32
         self.vocabulary_size = 1966     # 1963 word + '<S>' '</S>' '<EOS>'
 
         self.lstm_units = 512
@@ -52,16 +52,7 @@ class Model(object):
                                     regularizer=nn.kernel_regularizer(),
                                     trainable=True)
 
-        # 1. build Sent LSTM and Word LSTM
-        SentLSTM = tf.nn.rnn_cell.LSTMCell(
-            self.lstm_units,
-            initializer=nn.kernel_initializer())
-        if self.is_train:
-            SentLSTM = tf.nn.rnn_cell.DropoutWrapper(
-                SentLSTM,
-                input_keep_prob=1.0 - self.lstm_drop_rate,
-                output_keep_prob=1.0 - self.lstm_drop_rate,
-                state_keep_prob=1.0 - self.lstm_drop_rate)
+        # 1. build Word LSTM
         WordLSTM = tf.nn.rnn_cell.LSTMCell(
             self.lstm_units,
             initializer=nn.kernel_initializer())
@@ -71,20 +62,15 @@ class Model(object):
                 input_keep_prob=1.0 - self.lstm_drop_rate,
                 output_keep_prob=1.0 - self.lstm_drop_rate,
                 state_keep_prob=1.0 - self.lstm_drop_rate)
-        SentLSTM_last_state = SentLSTM.zero_state(self.batch_size, dtype=tf.float32)
 
 
         predictions = []  # store predict word
         prediction_corrects = []  # store correct predict to compute accuracy
         cross_entropies = []  # store cross entropy loss
         # 3. generate word step by step
-        for sent_id in range(self.max_sentence_num):
-            with tf.variable_scope("sent_lstm"):
-                SentLSTM_current_output, SentLSTM_current_state = SentLSTM(self.visual_feats, SentLSTM_last_state)
-            SentLSTM_last_state = SentLSTM_current_state
-
+        for sent_id in range(1):
             with tf.variable_scope("word_lstm_initialize"):
-                context = SentLSTM_current_output
+                context = self.visual_feats
                 initial_memory = nn.dense(context, self.lstm_units, name='fc_a')
                 initial_output = nn.dense(context, self.lstm_units, name='fc_b')
             WordLSTM_last_state = initial_memory, initial_output
@@ -124,6 +110,58 @@ class Model(object):
                 prediction_correct = tf.where(
                     tf.equal(prediction, ground_truth),
                     tf.cast(self.masks[:, sent_id*self.max_caption_length + id], tf.float32),
+                    tf.cast(tf.zeros_like(prediction), tf.float32)
+                )
+                prediction_corrects.append(prediction_correct)
+
+        for sent_id in range(1, self.max_sentence_num):
+            with tf.variable_scope('sent_encode'):
+                word_embeddings = tf.nn.embedding_lookup(word_embedding_matrix, self.sentences[:, (sent_id-1)*self.max_caption_length:sent_id*self.max_caption_length])
+                sent_feats = self.sentence_encode(word_embeddings)
+
+            with tf.variable_scope("word_lstm_initialize2", reuse=tf.AUTO_REUSE):
+                sent_feats = nn.dropout(sent_feats, self.dropout_rate, self.is_train, name='drop')
+                # context = tf.concat([self.visual_feats, sent_feats], axis=1)
+                context = sent_feats
+                initial_memory = nn.dense(context, self.lstm_units, name='fc_a')
+                initial_output = nn.dense(context, self.lstm_units, name='fc_b')
+            WordLSTM_last_state = initial_memory, initial_output
+            WordLSTM_last_word = tf.zeros([self.batch_size], tf.int32)  # tf.zeros() means the '<S>' token
+
+            for id in range(self.max_caption_length):
+                with tf.variable_scope("word_embedding"):
+                    word_embedding = tf.nn.embedding_lookup(word_embedding_matrix, WordLSTM_last_word)
+
+                with tf.variable_scope('WordLSTM'):
+                    inputs = tf.concat([word_embedding], axis=1)
+                    WordLSTM_current_output, WordLSTM_current_state = WordLSTM(inputs, WordLSTM_last_state)
+
+                with tf.variable_scope('decode'):
+                    expanded_output = nn.dropout(WordLSTM_current_output, self.dropout_rate, self.is_train, name='drop')
+                    logits = nn.dense(expanded_output, units=self.vocabulary_size, activation=None, name='fc')
+                    prediction = tf.argmax(logits, 1)
+                    predictions.append(prediction)
+                # tf.get_variable_scope().reuse_variables()
+
+                WordLSTM_last_state = WordLSTM_current_state
+                # use teacher policy
+                if self.is_train:
+                    WordLSTM_last_word = self.sentences[:, sent_id * self.max_caption_length + id]
+                else:
+                    WordLSTM_last_word = prediction
+
+                # compute loss
+                cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    labels=self.sentences[:, sent_id * self.max_caption_length + id],
+                    logits=logits)
+                masked_cross_entropy = cross_entropy * self.masks[:, sent_id * self.max_caption_length + id]
+                cross_entropies.append(masked_cross_entropy)
+
+                # compute accuracy
+                ground_truth = tf.cast(self.sentences[:, sent_id * self.max_caption_length + id], tf.int64)
+                prediction_correct = tf.where(
+                    tf.equal(prediction, ground_truth),
+                    tf.cast(self.masks[:, sent_id * self.max_caption_length + id], tf.float32),
                     tf.cast(tf.zeros_like(prediction), tf.float32)
                 )
                 prediction_corrects.append(prediction_correct)
@@ -195,3 +233,19 @@ class Model(object):
 
         self.summary = tf.summary.merge_all()
         print('summary built.')
+
+    def sentence_encode(self, word_embeddings):
+        # word_embeddings shape = [batch_size, max_sentence_length, 512]
+        with tf.variable_scope('sent_decode', reuse=tf.AUTO_REUSE):
+            net = tf.layers.conv1d(word_embeddings, filters=1024, kernel_size=3, strides=1)
+            sent_feature1 = tf.layers.max_pooling1d(net, pool_size=self.max_caption_length - 2, strides=100)
+            net = tf.layers.conv1d(net, filters=1024, kernel_size=3, strides=1)
+            sent_feature2 = tf.layers.max_pooling1d(net, pool_size=self.max_caption_length - 4, strides=100)
+            net = tf.layers.conv1d(net, filters=1024, kernel_size=3, strides=1)
+            sent_feature3 = tf.layers.max_pooling1d(net, pool_size=self.max_caption_length - 6, strides=100)
+        sent_feature1 = tf.reshape(sent_feature1, shape=[self.batch_size, 1024])
+        sent_feature2 = tf.reshape(sent_feature2, shape=[self.batch_size, 1024])
+        sent_feature3 = tf.reshape(sent_feature3, shape=[self.batch_size, 1024])
+        sent_feature = tf.concat([sent_feature1, sent_feature2, sent_feature3], axis=1)  # [batch_size, 1024*3]
+        # print(sent_feature)
+        return sent_feature

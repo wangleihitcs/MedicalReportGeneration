@@ -3,19 +3,20 @@ import numpy as np
 
 import datasets
 import metrics
+
+# from cnn_rnn_model import Model
 # from cnn_rnn_att_model import Model
 # from cnn_hier_rnn_model import Model
-# from cnn_hier_rnn_vgg_model import Model
-# from cnn_hier_rnn_resnet_model import Model
-from cnn_1d_conv_model import Model
-# from cnn_1d_conv_att_model import Model
+# from cnn_1d_conv_model import Model
+from cnn_1d_conv_only_semantic_model import Model
+# from cnn_1d_conv_only_visual_model import Model
 
 imgs_dir_path = '/home/wanglei/Documents/IUX-Ray/front_view_data'
 data_entry_path = '../data/data_entry/data_entry.json'
 test_split_path = '../data/test_split.json'
 vocabulary_path = '../data/data_entry/vocabulary.json'
 
-model_path = '../data/model/my-test-22'
+model_path = '../data/model/my-test-100'
 def test():
     md = Model(is_training=False)
 
@@ -48,7 +49,7 @@ def test():
             acc_list.append(_acc)
             predictions_list.append(_predictions)
             sentence_list_metrics += sentences
-        bleu, meteor, rouge, cider = metrics.coco_caption_metrics_hier(predictions_list, sentence_list_metrics,
+        bleu, meteor, rouge, cider = metrics.coco_caption_metrics_hier1(predictions_list, sentence_list_metrics,
                                                                     filename_list, vocabulary_path, batch_size=md.batch_size, is_training=False)
         print('loss = %.4f, acc = %.4f, bleu = %s, meteor = %s, rouge = %s, cider = %s' %
               (np.mean(loss_list), np.mean(acc_list), bleu, meteor, rouge, cider))
