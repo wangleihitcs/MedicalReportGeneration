@@ -22,10 +22,11 @@ class Config(object):
         self.max_sentence_num = 6
         self.max_sentence_length = 40
         self.epoch_num = 50
-        self.train_num = 2811
-        self.test_num = 300
+        self.train_num = 2761
+        self.test_num = 350
 
         self.learning_rate = 1e-4
-        self.drop_rate = 0.5
+        self.dropout_rate = 0.5
+        self.rnn_dropout_rate = 0.3
         self.decay_iters = 5 * self.train_num / self.batch_size
         self.decay_rate = 0.9

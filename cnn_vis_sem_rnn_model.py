@@ -39,17 +39,18 @@ class Model(object):
         if self.is_training:
             WordRNN = tf.nn.rnn_cell.DropoutWrapper(
                 WordRNN,
-                input_keep_prob=1.0 - self.config.drop_rate,
-                output_keep_prob=1.0 - self.config.drop_rate,
-                state_keep_prob=1.0 - self.config.drop_rate)
+                input_keep_prob=1.0 - self.config.rnn_dropout_rate,
+                output_keep_prob=1.0 - self.config.rnn_dropout_rate,
+                state_keep_prob=1.0 - self.config.rnn_dropout_rate)
 
-        # 2. generate sentence one by one
         predicts = []
         cross_entropies = []
         corrects = []
-        for sent_id in range(self.config.max_sentence_num):
+        global last_sentence
+        # 2. generate first sentence
+        for sent_id in range(1):
             # 2.1 init Word RNN
-            with tf.variable_scope('word_rnn_initialize_%s' % sent_id, reuse=tf.AUTO_REUSE):
+            with tf.variable_scope('word_rnn_initialize_0'):
                 context = self.visual_feats
                 init_c = tf.layers.dense(context, units=self.config.rnn_units, name='fc_c')
                 init_h = tf.layers.dense(context, units=self.config.rnn_units, name='fc_h')
@@ -58,8 +59,9 @@ class Model(object):
                 WordRNN_last_word = tf.zeros([self.batch_size], tf.int32)
 
             # 2.2 generate word one by one
+            last_sentence = []
             for word_id in range(self.config.max_sentence_length):
-                with tf.variable_scope("word_embedding"):
+                with tf.variable_scope('word_embedding'):
                     word_embedding = tf.nn.embedding_lookup(word_embedding_matrix, WordRNN_last_word)
 
                 with tf.variable_scope('word_rnn'):
@@ -70,6 +72,7 @@ class Model(object):
                     logits = tf.layers.dense(WordRNN_output, units=self.config.vocabulary_size, name='fc_d')
                     predict = tf.argmax(logits, 1)
                     predicts.append(predict)
+                    last_sentence.append(predict)
 
                 tf.get_variable_scope().reuse_variables()
                 if self.is_training:
@@ -87,6 +90,70 @@ class Model(object):
                 correct = tf.where(
                     tf.equal(predict, ground_truth),
                     tf.cast(self.masks[:, sent_id*self.config.max_sentence_length + word_id], tf.float32),
+                    tf.cast(tf.zeros_like(predict), tf.float32)
+                )
+                corrects.append(correct)
+
+        # 3. generate next ot last sentence
+        for sent_id in range(1, self.config.max_sentence_num):
+            # 3.1 get sentence feature
+            with tf.variable_scope('word_embedding'):
+                if self.is_training:
+                    word_embeddings = tf.nn.embedding_lookup(word_embedding_matrix, self.sentences[:, (sent_id-1)*self.config.max_sentence_length : sent_id*self.config.max_sentence_length])
+                else:
+                    batch_sentences = tf.stack(last_sentence, axis=0)   # last_sentence shape = [max_sentence_length, batch_size]
+                    batch_sentences_tran = tf.transpose(batch_sentences)
+                    word_embeddings = tf.nn.embedding_lookup(word_embedding_matrix, batch_sentences_tran)
+
+            self.semantic_features = self.sentence_encode(word_embeddings)
+
+            # 3.2 init Word RNN
+            with tf.variable_scope('word_rnn_initialize_%s' % sent_id, reuse=tf.AUTO_REUSE):
+                vis_features = tf.layers.dense(self.visual_feats, units=1024, name='fc_v')
+                sem_features = self.semantic_features
+                context = tf.concat([vis_features, sem_features], axis=1)
+                init_c = tf.layers.dense(context, units=self.config.rnn_units, name='fc_c')
+                init_h = tf.layers.dense(context, units=self.config.rnn_units, name='fc_h')
+
+                WordRNN_last_state = init_c, init_h
+                WordRNN_last_word = tf.zeros([self.batch_size], tf.int32)
+
+            # 3.3 generate word one by one
+            last_sentence = []
+            for word_id in range(self.config.max_sentence_length):
+                with tf.variable_scope("word_embedding"):
+                    word_embedding = tf.nn.embedding_lookup(word_embedding_matrix, WordRNN_last_word)
+
+                with tf.variable_scope('word_rnn'):
+                    WordRNN_output, WordRNN_state = WordRNN(word_embedding, WordRNN_last_state)
+                    WordRNN_last_state = WordRNN_state
+
+                with tf.variable_scope('decode'):
+                    logits = tf.layers.dense(WordRNN_output, units=self.config.vocabulary_size, name='fc_d')
+                    predict = tf.argmax(logits, 1)
+                    predicts.append(predict)
+                    last_sentence.append(predict)
+
+                tf.get_variable_scope().reuse_variables()
+                if self.is_training:
+                    WordRNN_last_word = self.sentences[:, sent_id * self.config.max_sentence_length + word_id]
+                else:
+                    WordRNN_last_word = predict
+
+                # compute cross entropy loss
+                cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    labels=self.sentences[:, sent_id * self.config.max_sentence_length + word_id],
+                    logits=logits)
+                masked_cross_entropy = cross_entropy * self.masks[:,
+                                                       sent_id * self.config.max_sentence_length + word_id]
+                cross_entropies.append(masked_cross_entropy)
+
+                # compute acc
+                ground_truth = tf.cast(self.sentences[:, sent_id * self.config.max_sentence_length + word_id],
+                                       tf.int64)
+                correct = tf.where(
+                    tf.equal(predict, ground_truth),
+                    tf.cast(self.masks[:, sent_id * self.config.max_sentence_length + word_id], tf.float32),
                     tf.cast(tf.zeros_like(predict), tf.float32)
                 )
                 corrects.append(correct)
@@ -149,3 +216,17 @@ class Model(object):
 
         self.summary = tf.summary.merge_all()
         print('summary built.')
+
+    def sentence_encode(self, word_embeddings):
+        with tf.variable_scope('sentence_encode', reuse=tf.AUTO_REUSE):
+            net = tf.layers.conv1d(word_embeddings, filters=1024, kernel_size=3, strides=1)
+            sent_feature1 = tf.layers.max_pooling1d(net, pool_size=self.config.max_sentence_length - 2, strides=100)
+            net = tf.layers.conv1d(net, filters=1024, kernel_size=3, strides=1)
+            sent_feature2 = tf.layers.max_pooling1d(net, pool_size=self.config.max_sentence_length - 2 - 4, strides=100)
+            net = tf.layers.conv1d(net, filters=1024, kernel_size=3, strides=1)
+            sent_feature3 = tf.layers.max_pooling1d(net, pool_size=self.config.max_sentence_length - 2 - 6, strides=100)
+        sent_feature1 = tf.reshape(sent_feature1, shape=[self.batch_size, 1024])
+        sent_feature2 = tf.reshape(sent_feature2, shape=[self.batch_size, 1024])
+        sent_feature3 = tf.reshape(sent_feature3, shape=[self.batch_size, 1024])
+        semantic_features = tf.concat([sent_feature1, sent_feature2, sent_feature3], axis=1)
+        return semantic_features

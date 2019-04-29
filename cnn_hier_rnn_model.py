@@ -39,18 +39,18 @@ class Model(object):
         if self.is_training:
             SentRNN = tf.nn.rnn_cell.DropoutWrapper(
                 SentRNN,
-                input_keep_prob = 1.0 - self.config.drop_rate,
-                output_keep_prob = 1.0 - self.config.drop_rate,
-                state_keep_prob = 1.0 - self.config.drop_rate)
+                input_keep_prob = 1.0 - self.config.rnn_dropout_rate,
+                output_keep_prob = 1.0 - self.config.rnn_dropout_rate,
+                state_keep_prob = 1.0 - self.config.rnn_dropout_rate)
         WordRNN = tf.nn.rnn_cell.LSTMCell(
             name='word_rnn',
             num_units=self.config.rnn_units)
         if self.is_training:
             WordRNN = tf.nn.rnn_cell.DropoutWrapper(
                 WordRNN,
-                input_keep_prob=1.0 - self.config.drop_rate,
-                output_keep_prob=1.0 - self.config.drop_rate,
-                state_keep_prob=1.0 - self.config.drop_rate)
+                input_keep_prob=1.0 - self.config.rnn_dropout_rate,
+                output_keep_prob=1.0 - self.config.rnn_dropout_rate,
+                state_keep_prob=1.0 - self.config.rnn_dropout_rate)
 
 
         # 2. init Sent RNN
