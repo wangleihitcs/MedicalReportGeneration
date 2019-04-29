@@ -1,5 +1,5 @@
 ## Medical Report Generation
-A base project for Medical Report Generation.
+A base tensorflow project for Medical Report Generation.
 
 ## Config
 - python 2.7 / tensorflow 1.8.0-1.11.0
