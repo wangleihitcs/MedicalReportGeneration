@@ -42,7 +42,21 @@ A base project for Medical Report Generation.
 e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Radiology Report Generation**, MICCAI 2018
 
 ## Demo
-
+- You could use two chest x-ray imgs to test
+    ```shell
+    $ python demo.py --img_frontal_path='./data/experiments/CXR1900_IM-0584-1001.png' --img_lateral_path='./data/experiments/CXR1900_IM-0584-2001.png' --model_path='./data/model/my-test-2500'
+    ```
+- example
+    ![example2](data/experiments/CXR1900_IM-0584-1001.png)![example2](data/experiments/CXR1900_IM-0584-2001.png)
+    
+    ```shell
+    $ The generate report:
+         no acute cardiopulmonary abnormality
+         the lungs are clear
+         there is no focal consolidation
+         there is no focal consolidation
+         there is no pneumothorax or pneumothorax
+    ```
 
 ## Experments
 #### Metrics Results
