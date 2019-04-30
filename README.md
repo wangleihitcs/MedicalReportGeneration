@@ -65,8 +65,8 @@ e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Rad
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | CNN-RNN<sup>[10]</sup> | 0.3087 | 0.2018 | 0.1400 | 0.0986 | 0.1528 | 0.3208 | 0.3068 |
 | CNN-RNN-Att<sup>[11]</sup> | 0.3274 | 0.2155 | 0.11478 | 0.1036 | 0.1571 | 0.3184 | 0.3649 |
-| Hier-RNN<sup>[9]</sup> | 0.3508 | 0.2385 | 0.1642 | 0.1127 | 0.1607 | 0.3252 | 0.2612 |
-| MRNA<sup>[6]</sup> | 0.3890 | 0.2588 | 0.1821 | 0.1301 | 0.1681 | 0.3152 | 0.2944 |
+| Hier-RNN<sup>[9]</sup> | 0.3352 | 0.2218 | 0.1518 | 0.1019 | 0.1574 | 0.3203 | 0.2747 |
+| MRNA<sup>[6]</sup> | 0.3721 | 0.2445| 0.1729 | 0.1234 | 0.1647 | 0.3224 | 0.3054 |
 | Ours | 0.4431 | 0.3116 | 0.2137 | 0.1473 | 0.2004 | 0.3611 | 0.4128 |
 
 - CNN-RNN and CNN-RNN-Att are simple base models for image caption.
@@ -90,7 +90,7 @@ because the report sentence num between 4 and 8 occupy 90% above, so I set max s
 is 3111.
 
 #### Result Between Normal and Abnormal Reports
-When I analyse the reports from datasets, I have found **Normal Reports : Abnormal Report = 2.5 : 1**, unbalanced.
+When I analyse the reports from datasets, I have found **Normal Reports : Abnormal Reports = 2.5 : 1, unbalanced**.
 My best result is(not release):
 
 |  | BLEU_1 | BLEU_2 | BLEU_3 | BLEU_4 | METEOR | ROUGE | CIDEr |
@@ -105,7 +105,7 @@ means the abnormal report(with disease or abnormality).
 ## Summary
 #### Problems
 There are many challenges for this task, I refer to some points of <sup>**[1]**</sup>.
-- **Very Small Medical Data**, most medical datasets only with images and nearly without bounding boxes and reports.
+- **Very Small Medical Data**, most medical datasets only with images and nearly without bounding boxes and reports, so it is very very overfit.
 - **Very Uncertainty Report Descriptions**, because different doctors have different style description for diagnosis report.
 - **More-Like Dense Caption Task not Story Generation**, we should ground the description sentence with relevant region.
 - **Unsuitable Metrics**, the BLEU for machine translation and CIDEr for captioning and so on are not suitable for this task.

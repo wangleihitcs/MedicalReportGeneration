@@ -110,8 +110,8 @@ class Model(object):
 
             # 3.2 init Word RNN
             with tf.variable_scope('word_rnn_initialize_%s' % sent_id, reuse=tf.AUTO_REUSE):
-                vis_context = tf.layers.dense(self.visual_feats, units=1024, activation=tf.tanh, use_bias=True, name='fc_v')
-                context = tf.concat([vis_context, self.semantic_features], axis=1)
+                # vis_context = tf.layers.dense(self.visual_feats, units=1024, activation=tf.tanh, use_bias=True, name='fc_v')
+                context = tf.concat([self.visual_feats, self.semantic_features], axis=1)
                 context = tf.layers.dropout(context, rate=self.config.dropout_rate, training=self.is_training, name='drop_s')
                 init_c = tf.layers.dense(context, units=self.config.rnn_units, activation=tf.tanh, use_bias=True, name='fc_c')
                 init_h = tf.layers.dense(context, units=self.config.rnn_units, activation=tf.tanh, use_bias=True, name='fc_h')
