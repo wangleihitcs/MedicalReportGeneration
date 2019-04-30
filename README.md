@@ -66,8 +66,7 @@ e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Rad
 | CNN-RNN-Att<sup>[11]</sup> | 0.3573 | 0.2290 | 0.1590 | 0.1142 | 0.1578 | 0.3135 | 0.4510 |
 | Hier-RNN<sup>[9]</sup> | 0.3508 | 0.2385 | 0.1642 | 0.1127 | 0.1607 | 0.3252 | 0.2612 |
 | MRNA<sup>[6]</sup> | 0.3890 | 0.2588 | 0.1821 | 0.1301 | 0.1681 | 0.3152 | 0.2944 |
-| Vis-RNN | 0.3275 | 0.2183 | 0.1515 | 0.1042 | 0.1541 | 0.3123 | 0.3021 |
-| Sem-RNN | 0.4034 | 0.2687 | 0.1864 | 0.1288 | 0.1729 | 0.3314 | 0.3393 |
+| Ours | 0.4431 | 0.3116 | 0.2137 | 0.1473 | 0.2004 | 0.3611 | 0.4128 |
 
 - CNN-RNN and CNN-RNN-Att are simple base models for image caption.
 - Hier-RNN is a base model for image description generation, because we have not bounding boxes, so we use visual features 
@@ -75,8 +74,6 @@ from CNN directly to decode the sentence word by word.
 - MRNA is a base model from the MICCAI 2018 paper<sup>[6]</sup>, we use visual features from CNN to generate first sentence, 
 then we concat visual features and semantic features last sentence encoded from 1d-conv layers to generate second-final sentence
 word by word.
-- Vis-RNN is a base model we only ues visual features to generate every sentence.
-- Sem-RNN is a base model we only use semantic features to generate second-final sentence.
 
 e.g. I have only release code for hier rnn and MRNA because others are easy.
 
@@ -91,7 +88,7 @@ because the report sentence num between 4 and 8 occupy 90% above, so I set max s
 
 #### Result Between Normal and Abnormal Reports
 When I analyse the reports from datasets, I have found **Normal Reports : Abnormal Report = 2.5 : 1**, unbalanced.
-My best result is:
+My best result is(not release):
 
 |  | BLEU_1 | BLEU_2 | BLEU_3 | BLEU_4 | METEOR | ROUGE | CIDEr |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -115,7 +112,7 @@ they do not release code.
 #### Little Advice
 - If you want to research medical report generation, you could get more data, and you could focus on the **Semantic Information** not **Visual Information** when data is small.
 In VQA task, someones found that Language is more useful than Image.
-- You could use more strong Language Model(BERT, ELMo or Transformer), maybe useful.
+- You could use more stronger Language Model(BERT, ELMo or Transformer), maybe useful.
 
 ## References
 - [1][医学诊断报告生成论文综述](https://blog.csdn.net/wl1710582732/article/details/85345285)
