@@ -97,7 +97,7 @@ def get_train_tfrecord(imgs_path, data_entry_path, split_list_path, vocabulary_p
         mask = np.ones(shape=[config.max_sentence_num * config.max_sentence_length], dtype=np.int64)
         for i in range(config.max_sentence_num*config.max_sentence_length):
             sentence[i] = word2id[word_list[i]]
-            if word_list == '<EOS>':
+            if word_list[i] == '<EOS>':
                 mask[i] = 0
 
         image_id = int(id[3:])

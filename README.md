@@ -8,10 +8,10 @@ A base project for Medical Report Generation.
 ## DataDownload
 - IU X-Ray Dataset
     * The raw data is from [Open-i service of the National Library](https://openi.nlm.nih.gov/), it has many public datasets.
-    * The proccessed data is on [Medical-Report/NLMCXR_png_pairs.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you should unzip it to dir 'data/NLMCXR_png_pairs/', got 3011 image pairs.
+    * The proccessed data is on [Medical-Report/NLMCXR_png_pairs.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you should unzip it to dir 'data/NLMCXR_png_pairs/'.
 - PreTrained InceptionV3 model
     * The raw model is from [TensorflowSlim Image Classification Model Library](https://github.com/tensorflow/models/tree/master/research/slim)
-    * The proccessed data is on [Medical-Report/pretrain_model.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you shold unzip it to dir 'data/pretrain_model/'
+    * The proccessed data is on [Medical-Report/pretrain_model.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you shold unzip it to dir 'data/pretrain_model/'.
 
 ## Train
 #### First, get post proccess data(I have done it)
@@ -64,7 +64,7 @@ e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Rad
 |  | BLEU_1 | BLEU_2 | BLEU_3 | BLEU_4 | METEOR | ROUGE | CIDEr |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | CNN-RNN<sup>[10]</sup> | 0.3087 | 0.2018 | 0.1400 | 0.0986 | 0.1528 | 0.3208 | 0.3068 |
-| CNN-RNN-Att<sup>[11]</sup> | 0.3573 | 0.2290 | 0.1590 | 0.1142 | 0.1578 | 0.3135 | 0.4510 |
+| CNN-RNN-Att<sup>[11]</sup> | 0.3274 | 0.2155 | 0.11478 | 0.1036 | 0.1571 | 0.3184 | 0.3649 |
 | Hier-RNN<sup>[9]</sup> | 0.3508 | 0.2385 | 0.1642 | 0.1127 | 0.1607 | 0.3252 | 0.2612 |
 | MRNA<sup>[6]</sup> | 0.3890 | 0.2588 | 0.1821 | 0.1301 | 0.1681 | 0.3152 | 0.2944 |
 | Ours | 0.4431 | 0.3116 | 0.2137 | 0.1473 | 0.2004 | 0.3611 | 0.4128 |
@@ -73,8 +73,9 @@ e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Rad
 - Hier-RNN is a base model for image description generation, because we have not bounding boxes, so we use visual features 
 from CNN directly to decode the sentence word by word.
 - MRNA is a base model from the MICCAI 2018 paper<sup>[6]</sup>, we use visual features from CNN to generate first sentence, 
-then we concat visual features and semantic features last sentence encoded from 1d-conv layers to generate second-final sentence
+then we concat visual features and semantic features(last sentence encoded from 1d-conv layers) to generate second-final sentence
 word by word.
+- Ours are is based on MRNA, but we improve it.
 
 e.g. I have only release code for hier rnn and MRNA because others are easy.
 
@@ -85,7 +86,8 @@ config.py
 
 #### IU X-Rat Datasets
 The raw images are 7470, but both has frontal_view and lateral_view is 3391*2. The raw report is 3927, but sentence num >= 4 is 3631, 
-because the report sentence num between 4 and 8 occupy 90% above, so I set max sentence num = 8.
+because the report sentence num between 4 and 8 occupy 90% above, so I set max sentence num = 8. Both has image-pairs and report(sentence num >= 4) 
+is 3111.
 
 #### Result Between Normal and Abnormal Reports
 When I analyse the reports from datasets, I have found **Normal Reports : Abnormal Report = 2.5 : 1**, unbalanced.
@@ -93,9 +95,9 @@ My best result is(not release):
 
 |  | BLEU_1 | BLEU_2 | BLEU_3 | BLEU_4 | METEOR | ROUGE | CIDEr |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| Total | 0.4431 | 0.3116 | 0.2137 | 0.1473 | 0.2004 | 0.3611 | 0.4128 |
-| Normal | 0.5130 | 0.3628 | 0.2615 | 0.1750 | 0.2313 | 0.3894 | 0.4478 |
-| Abnormal | 0.2984 | 0.1903 | 0.1274 | 0.0934 | 0.1289 | 0.2397 | 0.2641 |
+| Total Test Data | 0.4431 | 0.3116 | 0.2137 | 0.1473 | 0.2004 | 0.3611 | 0.4128 |
+| Normal Test Data | 0.5130 | 0.3628 | 0.2615 | 0.1750 | 0.2313 | 0.3894 | 0.4478 |
+| Abnormal Test Data | 0.2984 | 0.1903 | 0.1274 | 0.0934 | 0.1289 | 0.2397 | 0.2641 |
 
 e.g. Total means the total Test Dataset, Normal means the normal report(no disease) of Test Dataset, Abnormal 
 means the abnormal report(with disease or abnormality).
