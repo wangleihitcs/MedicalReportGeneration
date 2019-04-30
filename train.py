@@ -6,8 +6,7 @@ import datasets
 import metrics
 from config import Config
 # from cnn_hier_rnn_model import Model
-# from cnn_vis_rnn_model import Model
-from cnn_sem_rnn_model import Model
+from cnn_vis_sem_rnn_model import Model
 
 def train():
     c = Config()
@@ -34,7 +33,7 @@ def train():
         threads = tf.train.start_queue_runners(coord=coord)
 
         iter = 0
-        loss_list, acc_list, predicts_list, sentences_list, image_id_list = [], [], [], [], []
+        # loss_list, acc_list, predicts_list, sentences_list, image_id_list = [], [], [], [], []
         for epoch in range(c.epoch_num):
             for _ in range(c.train_num / md.batch_size):
                 images_frontal, images_lateral, sentences, masks, image_ids = sess.run([image_frontal_batch, image_lateral_batch, sentence_batch, mask_batch, image_id_batch])

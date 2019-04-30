@@ -52,8 +52,8 @@ class Model(object):
             # 2.1 init Word RNN
             with tf.variable_scope('word_rnn_initialize_0'):
                 context = self.visual_feats
-                init_c = tf.layers.dense(context, units=self.config.rnn_units, name='fc_c')
-                init_h = tf.layers.dense(context, units=self.config.rnn_units, name='fc_h')
+                init_c = tf.layers.dense(context, units=self.config.rnn_units, activation=tf.tanh, use_bias=True, name='fc_c')
+                init_h = tf.layers.dense(context, units=self.config.rnn_units, activation=tf.tanh, use_bias=True, name='fc_h')
 
                 WordRNN_last_state = init_c, init_h
                 WordRNN_last_word = tf.zeros([self.batch_size], tf.int32)
@@ -69,7 +69,8 @@ class Model(object):
                     WordRNN_last_state = WordRNN_state
 
                 with tf.variable_scope('decode'):
-                    logits = tf.layers.dense(WordRNN_output, units=self.config.vocabulary_size, name='fc_d')
+                    WordRNN_output = tf.layers.dropout(WordRNN_output, rate=self.config.dropout_rate, training=self.is_training, name='drop_d')
+                    logits = tf.layers.dense(WordRNN_output, units=self.config.vocabulary_size, activation=None, use_bias=True, name='fc_d')
                     predict = tf.argmax(logits, 1)
                     predicts.append(predict)
                     last_sentence.append(predict)
@@ -109,11 +110,11 @@ class Model(object):
 
             # 3.2 init Word RNN
             with tf.variable_scope('word_rnn_initialize_%s' % sent_id, reuse=tf.AUTO_REUSE):
-                vis_features = tf.layers.dense(self.visual_feats, units=1024, name='fc_v')
-                sem_features = self.semantic_features
-                context = tf.concat([vis_features, sem_features], axis=1)
-                init_c = tf.layers.dense(context, units=self.config.rnn_units, name='fc_c')
-                init_h = tf.layers.dense(context, units=self.config.rnn_units, name='fc_h')
+                vis_context = tf.layers.dense(self.visual_feats, units=1024, activation=tf.tanh, use_bias=True, name='fc_v')
+                context = tf.concat([vis_context, self.semantic_features], axis=1)
+                context = tf.layers.dropout(context, rate=self.config.dropout_rate, training=self.is_training, name='drop_s')
+                init_c = tf.layers.dense(context, units=self.config.rnn_units, activation=tf.tanh, use_bias=True, name='fc_c')
+                init_h = tf.layers.dense(context, units=self.config.rnn_units, activation=tf.tanh, use_bias=True, name='fc_h')
 
                 WordRNN_last_state = init_c, init_h
                 WordRNN_last_word = tf.zeros([self.batch_size], tf.int32)
@@ -129,7 +130,8 @@ class Model(object):
                     WordRNN_last_state = WordRNN_state
 
                 with tf.variable_scope('decode'):
-                    logits = tf.layers.dense(WordRNN_output, units=self.config.vocabulary_size, name='fc_d')
+                    WordRNN_output = tf.layers.dropout(WordRNN_output, rate=self.config.dropout_rate, training=self.is_training, name='drop_d')
+                    logits = tf.layers.dense(WordRNN_output, units=self.config.vocabulary_size, activation=None, use_bias=True, name='fc_d')
                     predict = tf.argmax(logits, 1)
                     predicts.append(predict)
                     last_sentence.append(predict)

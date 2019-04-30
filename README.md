@@ -1,5 +1,5 @@
 ## Medical Report Generation
-A base tensorflow project for Medical Report Generation.
+A base project for Medical Report Generation.
 
 ## Config
 - python 2.7 / tensorflow 1.8.0-1.11.0
@@ -8,10 +8,10 @@ A base tensorflow project for Medical Report Generation.
 ## DataDownload
 - IU X-Ray Dataset
     * The raw data is from [Open-i service of the National Library](https://openi.nlm.nih.gov/), it has many public datasets.
-    * The proccessed data is on [Medical-Report/NLMCXR_png_pairs.zip](https://pan.baidu.com/s/1v56nZKAkWqEePoc2TSmWSA)(提取码: stg4), you should unzip it to dir 'data/NLMCXR_png_pairs/', got 3011 image pairs.
+    * The proccessed data is on [Medical-Report/NLMCXR_png_pairs.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you should unzip it to dir 'data/NLMCXR_png_pairs/', got 3011 image pairs.
 - PreTrained InceptionV3 model
     * The raw model is from [TensorflowSlim Image Classification Model Library](https://github.com/tensorflow/models/tree/master/research/slim)
-    * The proccessed data is on [Medical-Report/pretrain_model.zip](https://pan.baidu.com/s/1v56nZKAkWqEePoc2TSmWSA)(提取码: stg4), you shold unzip it to dir 'data/pretrain_model/'
+    * The proccessed data is on [Medical-Report/pretrain_model.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you shold unzip it to dir 'data/pretrain_model/'
 
 ## Train
 #### First, get post proccess data(I have done it)
@@ -35,20 +35,14 @@ A base tensorflow project for Medical Report Generation.
     $ cd ./data
     $ tensorboard --logdir='summary'
 
-## Framework
-#### Core Framework
-![example](data/experiments/framework.png)
-
-e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Radiology Report Generation**, MICCAI 2018
-
 ## Demo
 - You could use two chest x-ray imgs to test
     ```shell
     $ python demo.py --img_frontal_path='./data/experiments/CXR1900_IM-0584-1001.png' --img_lateral_path='./data/experiments/CXR1900_IM-0584-2001.png' --model_path='./data/model/my-test-2500'
     ```
 - example
-
-    ![example2](data/experiments/CXR1900_IM-0584-1001.png)
+    ![example2](data/experiments/CXR1900_IM-0584-1001.png)![example2](data/experiments/CXR1900_IM-0584-2001.png)
+    
     ```shell
     $ The generate report:
          no acute cardiopulmonary abnormality
@@ -57,6 +51,12 @@ e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Rad
          there is no focal consolidation
          there is no pneumothorax or pneumothorax
     ```
+
+## Framework
+#### Core Framework
+![example](data/experiments/framework.png)
+
+e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Radiology Report Generation**, MICCAI 2018
 
 ## Experments
 #### Metrics Results
@@ -78,12 +78,16 @@ word by word.
 - Vis-RNN is a base model we only ues visual features to generate every sentence.
 - Sem-RNN is a base model we only use semantic features to generate second-final sentence.
 
-e.g. I have only release code for hier rnn and MRNA because others is easy.
+e.g. I have only release code for hier rnn and MRNA because others are easy.
 
 #### Details
-I split train/test dataset as 2761/350, use Adam with initial learning rate is 1e-4 with 5 epoch for decay 0.9.Then I set 
-generate max 6 sentence with max 40 words for a sentence. The word embedding size is 512 and RNN units is 512. The more details is on
+I split train/test dataset as 2811/300, use Adam with initial learning rate is 1e-4 with 5 epoch for decay 0.9.Then I set 
+generate max 8 sentence with max 40 words for a sentence. The word embedding size is 512 and RNN units is 512. The more details is on
 config.py
+
+#### IU X-Rat Datasets
+The raw images are 7470, but both has frontal_view and lateral_view is 3391*2. The raw report is 3927, but sentence num >= 4 is 3631, 
+because the report sentence num between 4 and 8 occupy 90% above, so I set max sentence num = 8.
 
 #### Result Between Normal and Abnormal Reports
 When I analyse the reports from datasets, I have found **Normal Reports : Abnormal Report = 2.5 : 1**, unbalanced.
