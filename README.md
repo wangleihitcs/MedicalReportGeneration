@@ -41,7 +41,8 @@ A base project for Medical Report Generation.
     $ python demo.py --img_frontal_path='./data/experiments/CXR1900_IM-0584-1001.png' --img_lateral_path='./data/experiments/CXR1900_IM-0584-2001.png' --model_path='./data/model/my-test-2500'
     ```
 - example
-    ![example2](data/experiments/CXR1900_IM-0584-1001.png)![example2](data/experiments/CXR1900_IM-0584-2001.png)
+
+    ![example2](data/experiments/CXR1900_IM-0584-1001.png)
     
     ```shell
     $ The generate report:
