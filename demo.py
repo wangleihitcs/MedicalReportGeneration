@@ -4,7 +4,8 @@ import json
 
 from config import Config
 from utils import image_utils
-from cnn_sem_rnn_model import Model
+from cnn_hier_rnn_model import Model
+# from cnn_sem_rnn_model import Model
 
 def get_test_data(img_frontal_path, img_lateral_path, config):
     image_frontal = np.zeros([1, config.image_size, config.image_size, 3])

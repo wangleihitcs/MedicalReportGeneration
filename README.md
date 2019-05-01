@@ -65,7 +65,7 @@ e.g.Yuan Xue et.al-**Multimodal Recurrent Model with Attention for Automated Rad
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | CNN-RNN<sup>[10]</sup> | 0.3087 | 0.2018 | 0.1400 | 0.0986 | 0.1528 | 0.3208 | 0.3068 |
 | CNN-RNN-Att<sup>[11]</sup> | 0.3274 | 0.2155 | 0.11478 | 0.1036 | 0.1571 | 0.3184 | 0.3649 |
-| Hier-RNN<sup>[9]</sup> | 0.3352 | 0.2218 | 0.1518 | 0.1019 | 0.1574 | 0.3203 | 0.2747 |
+| Hier-RNN<sup>[9]</sup> | 0.3426 | 0.2318 | 0.1602 | 0.1121 | 0.1583 | 0.3343 | 0.2755|
 | MRNA<sup>[6]</sup> | 0.3721 | 0.2445| 0.1729 | 0.1234 | 0.1647 | 0.3224 | 0.3054 |
 | Ours | 0.4431 | 0.3116 | 0.2137 | 0.1473 | 0.2004 | 0.3611 | 0.4128 |
 
@@ -81,7 +81,7 @@ e.g. I have only release code for hier rnn and MRNA because others are easy.
 
 #### Details
 I split train/test dataset as 2811/300, use Adam with initial learning rate is 1e-4 with 5 epoch for decay 0.9.Then I set 
-generate max 8 sentence with max 40 words for a sentence. The word embedding size is 512 and RNN units is 512. The more details is on
+generate max 8 sentence with max 50 words for a sentence. The word embedding size is 512 and RNN units is 512. The more details is on
 config.py
 
 #### IU X-Rat Datasets

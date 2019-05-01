@@ -5,8 +5,8 @@ import numpy as np
 import datasets
 import metrics
 from config import Config
-# from cnn_hier_rnn_model import Model
-from cnn_vis_sem_rnn_model import Model
+from cnn_hier_rnn_model import Model
+# from cnn_vis_sem_rnn_model import Model
 
 def train():
     c = Config()
@@ -47,11 +47,11 @@ def train():
                     [md.step_op, md.summary, md.global_step, md.loss, md.accuracy, md.predicts], feed_dict=feed_dict)
                 train_writer.add_summary(_summary, _global_step)
 
-                loss_list.append(_loss)
-                acc_list.append(_acc)
-                predicts_list.append(_predicts)
-                sentences_list.append(sentences)
-                image_id_list.append(image_ids)
+                # loss_list.append(_loss)
+                # acc_list.append(_acc)
+                # predicts_list.append(_predicts)
+                # sentences_list.append(sentences)
+                # image_id_list.append(image_ids)
 
                 iter += 1
                 if iter % 100 == 0:
@@ -90,7 +90,7 @@ def train():
                                                                                    is_training=mt.is_training)
                     print('---------iter = %s, loss = %.4f, acc = %.4f, bleu = %s, meteor = %s, rouge = %s, cider = %s' %
                           (iter, np.mean(loss_list), np.mean(acc_list), bleu, meteor, rouge, cider))
-                    loss_list, acc_list, predicts_list, sentences_list, image_id_list = [], [], [], [], []
+                    # loss_list, acc_list, predicts_list, sentences_list, image_id_list = [], [], [], [], []
 
                     saver.save(sess, c.model_path, global_step=iter)
 

@@ -20,7 +20,7 @@ class Config(object):
         self.word_embedding_size = 512
         self.image_size = 299
         self.max_sentence_num = 8
-        self.max_sentence_length = 40
+        self.max_sentence_length = 50
         self.epoch_num = 50
         self.train_num = 2761
         self.test_num = 350
