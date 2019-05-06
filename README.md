@@ -8,10 +8,10 @@ A base project for Medical Report Generation.
 ## DataDownload
 - IU X-Ray Dataset
     * The raw data is from [Open-i service of the National Library](https://openi.nlm.nih.gov/), it has many public datasets.
-    * The proccessed data is on [Medical-Report/NLMCXR_png_pairs.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you should unzip it to dir 'data/NLMCXR_png_pairs/'.
+    * The proccessed data is on [Medical-Report/NLMCXR_png_pairs.zip](https://pan.baidu.com/s/1CwChGVu6HWFDN2Xsy_htTA)(提取码: vdb6), you should unzip it to dir 'data/NLMCXR_png_pairs/'.
 - PreTrained InceptionV3 model
     * The raw model is from [TensorflowSlim Image Classification Model Library](https://github.com/tensorflow/models/tree/master/research/slim)
-    * The proccessed data is on [Medical-Report/pretrain_model.zip](https://pan.baidu.com/s/126Dw8aEzgasEvHYcn-wuXg)(提取码: qacj), you shold unzip it to dir 'data/pretrain_model/'.
+    * The proccessed data is on [Medical-Report/pretrain_model.zip](https://pan.baidu.com/s/1CwChGVu6HWFDN2Xsy_htTA)(提取码: vdb6), you shold unzip it to dir 'data/pretrain_model/'.
 
 ## Train
 #### First, get post proccess data(I have done it)
