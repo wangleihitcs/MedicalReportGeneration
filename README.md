@@ -103,6 +103,13 @@ e.g. Total means the total Test Dataset, Normal means the normal report(no disea
 means the abnormal report(with disease or abnormality).
 
 ## Summary
+#### Process
+Now, I have summarize the process of my research of Medical Report Generation.
+- First, it is easy to contact this task with Image2Text Task, so I exploit the Image Captions methods to solve this task's problems, like CNN+RNN methods.
+- Second, I found that Image Captions method can solve the one sentence(short), but this task has many sentences. So I use Image Paragraph Description Generation methods, like CNN+Hierarchical RNN.
+- Next, I found the reports of this task has the Impression and Findings description, so I exploit QA + Hierarchical RNN method to solve this task's problems.
+- Finally, I found that language informations are more important than image infos because small scale dataset, interesting.
+
 #### Problems
 There are many challenges for this task, I refer to some points of <sup>**[1]**</sup>.
 - **Very Small Medical Data**, most medical datasets only with images and nearly without bounding boxes and reports, so it is very very overfit.
