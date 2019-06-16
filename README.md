@@ -2,7 +2,7 @@
 A base project for Medical Report Generation.
 
 ## Config
-- python 2.7 / tensorflow 1.8.0-1.11.0
+- python 2.7 / tensorflow 1.8.0
 - extra package: nltk, json, PIL, numpy
 
 ## DataDownload
